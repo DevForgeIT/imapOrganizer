@@ -15,7 +15,6 @@ import {
   IconPlus,
   IconRefresh,
   IconSave,
-  IconSparkles,
   IconTrash,
   IconX,
 } from "@/components/Icons";
@@ -295,53 +294,51 @@ export default function MailboxesPage() {
                       : "mai"}
                   </div>
                   <div className="mailbox-card-actions">
-                    <Link
-                      href={`/mailboxes/${b.id}`}
-                      className="btn btn-sm btn-icon"
-                      title="Vedi organizzazione e messaggi"
-                    >
-                      <IconMail /> Apri posta
-                    </Link>
-                    <button
-                      type="button"
-                      className="secondary btn-sm btn-icon"
-                      onClick={() => openEdit(b)}
-                      title="Modifica"
-                    >
-                      <IconEdit /> Modifica
-                    </button>
-                    <button
-                      type="button"
-                      className="secondary btn-sm btn-icon"
-                      onClick={() => void testBox(b.id)}
-                      title="Test"
-                    >
-                      <IconPlug /> Test
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-sm btn-icon"
-                      onClick={() => void runJob(b.id, "sync")}
-                      title="Sync"
-                    >
-                      <IconRefresh /> Sync
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-sm btn-icon"
-                      onClick={() => void runJob(b.id, "classify")}
-                      title="Solo classifica"
-                    >
-                      <IconSparkles /> Solo classifica
-                    </button>
-                    <button
-                      type="button"
-                      className="danger btn-sm btn-icon"
-                      onClick={() => openDelete(b)}
-                      title="Elimina"
-                    >
-                      <IconTrash /> Elimina
-                    </button>
+                    <div className="mailbox-card-actions-main">
+                      <Link
+                        href={`/mailboxes/${b.id}`}
+                        className="btn btn-sm btn-icon"
+                        title="Vedi organizzazione e messaggi"
+                      >
+                        <IconMail /> Apri posta
+                      </Link>
+                      <button
+                        type="button"
+                        className="btn-sm btn-icon"
+                        onClick={() => void runJob(b.id, "sync")}
+                        title="Sincronizza e classifica"
+                      >
+                        <IconRefresh /> Sync
+                      </button>
+                    </div>
+                    <div className="mailbox-card-actions-meta">
+                      <button
+                        type="button"
+                        className="secondary btn-sm btn-icon icon-only"
+                        onClick={() => openEdit(b)}
+                        title="Modifica"
+                        aria-label="Modifica"
+                      >
+                        <IconEdit />
+                      </button>
+                      <button
+                        type="button"
+                        className="danger btn-sm btn-icon icon-only"
+                        onClick={() => openDelete(b)}
+                        title="Elimina"
+                        aria-label="Elimina"
+                      >
+                        <IconTrash />
+                      </button>
+                      <button
+                        type="button"
+                        className="secondary btn-sm btn-icon"
+                        onClick={() => void testBox(b.id)}
+                        title="Test connessione IMAP"
+                      >
+                        <IconPlug /> Test
+                      </button>
+                    </div>
                   </div>
                 </li>
               ))}
