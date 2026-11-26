@@ -1,0 +1,17 @@
+{
+  "name": "imap-organizer",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w @imap-organizer/api",
+    "dev:web": "npm run dev -w @imap-organizer/web",
+    "test:api": "npm run test -w @imap-organizer/api",
+    "build": "npm run build -w @imap-organizer/shared && npm run build -w @imap-organizer/api && npm run build -w @imap-organizer/web"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}

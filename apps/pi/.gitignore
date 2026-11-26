@@ -1,0 +1,4 @@
+auth.json
+mcp-auth.json
+*.secret
+sessions/

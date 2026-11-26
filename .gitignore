@@ -1,0 +1,16 @@
+node_modules
+.env
+.env.local
+dist
+.next
+coverage
+*.log
+.DS_Store
+.turbo
+*.tsbuildinfo
+apps/pi/auth.json
+apps/pi/**/auth.json
+apps/pi/mcp-auth.json
+docs/*
+docs/superpowers/plans/2026-11-25-imap-organizer-design.md
+docs/superpowers/specs/2026-11-25-imap-organizer-design.md

@@ -1,0 +1,150 @@
+publiccodeYmlVersion: 0.7.0
+name: IMAP Organizer
+applicationSuite: Organizzatore AI per la tua Posta elettronica
+url: https://github.com/DevForgeIT/imapOrganizer.git
+softwareVersion: "1.00"
+releaseDate: 2026-11-25
+platforms:
+  - web
+categories:
+  - email-management
+organisation:
+  uri: https://github.com/DevForgeIT
+  name: DevForgeIT
+developmentStatus: development
+softwareType: standalone/web
+intendedAudience:
+  countries:
+    - IT
+  scope:
+    - emergency-services
+    - agriculture
+    - defence
+    - culture
+    - employment
+    - education
+    - energy
+    - environment
+    - finance-and-economic-development
+    - foreign-affairs
+    - healthcare
+    - government
+    - infrastructures
+    - justice
+    - local-authorities
+    - manufacturing
+    - research
+    - science-and-technology
+    - security
+    - society
+    - sport
+    - tourism
+    - transportation
+    - welfare
+description:
+  en:
+    localisedName: IMAP Organizer
+    shortDescription: Multi-user software for synchronizing IMAP mailboxes and
+      automatically organizing messages into folders using AI-powered
+      classification.
+    longDescription: >-
+      IMAP Organizer
+
+
+      IMAP Organizer is a multi-user web application designed to manage and
+      organize email accounts accessible via the IMAP protocol. The system
+      connects to one or more mailboxes, synchronizes messages into an
+      application-managed archive, and automatically sorts them into thematic
+      folders, reducing the manual effort required for email organization.
+
+
+      The architecture separates the user interface from the application logic:
+      a lightweight web client (Next.js) communicates exclusively with a
+      dedicated API (Fastify), which handles authentication, IMAP connections,
+      MongoDB persistence, and message classification. Mailbox credentials are
+      encrypted server-side, and the browser does not store email data or
+      passwords locally.
+
+
+      After synchronization, a classification job analyzes the subject, sender,
+      and content of each message, assigning it to existing folders or
+      suggesting new ones. User-defined folders take priority over automatically
+      generated ones. Users can move messages between categories (including via
+      drag and drop), browse them through an email-client-style interface, and
+      permanently delete them from both the application and the IMAP server,
+      provided IMAP write access is enabled.
+
+
+      The platform supports multiple users without public registration: an
+      administrator creates and manages user accounts. Each user can access and
+      manage only their own mailboxes. Long-running operations, such as
+      synchronization and classification, are performed in the background, with
+      progress updates displayed in the user interface.
+
+
+      In summary, IMAP Organizer combines IMAP synchronization, AI-assisted
+      email organization, and everyday email management tools. It is designed
+      for environments where large volumes of email need to be catalogued in a
+      structured, consistent, and repeatable way.
+    features:
+      - Multi-user
+      - AI-powered email classification
+    screenshots:
+      - https://github.com/DevForgeIT/imapOrganizer/blob/main/screen/login.png
+      - https://github.com/DevForgeIT/imapOrganizer/blob/main/screen/sync.png
+  it:
+    localisedName: IMAP Organizer
+    shortDescription: Software multiutente per sincronizzare caselle IMAP e
+      organizzare automaticamente i messaggi in cartelle tramite classificazione
+      AI.
+    longDescription: >-
+      IMAP Organizer è un’applicazione web multiutente per gestire e organizzare
+      caselle di posta accessibili via protocollo IMAP. Il sistema collega una o
+      più caselle, sincronizza i messaggi in un archivio applicativo e li
+      classifica automaticamente in cartelle tematiche, riducendo il lavoro
+      manuale di smistamento.
+
+
+      L’architettura separa interfaccia e logica: un client web leggero
+      (Next.js) comunica solo con un’API dedicata (Fastify), che si occupa di
+      autenticazione, connessione IMAP, persistenza su MongoDB e
+      classificazione. Le credenziali delle caselle sono cifrate lato server; il
+      browser non conserva dati di posta o password in locale.
+
+
+      Dopo la sincronizzazione, un job di classificazione analizza oggetto,
+      mittente e contenuto dei messaggi e li assegna a cartelle esistenti oppure
+      ne propone di nuove. Le cartelle definite dall’utente hanno priorità
+      rispetto a quelle generate automaticamente. È possibile spostare i
+      messaggi tra categorie (anche con drag & drop), consultarli in una vista
+      stile client di posta ed eliminarli in modo effettivo sia
+      dall’applicazione sia dal server IMAP, quando la scrittura IMAP è
+      abilitata.
+
+
+      La piattaforma supporta più utenti senza registrazione pubblica: un
+      amministratore crea e gestisce gli account. Ogni utente opera solo sulle
+      proprie caselle. Le operazioni lunghe (sync e classificazione) sono
+      eseguite in background con feedback di avanzamento in interfaccia.
+
+
+      In sintesi, IMAP Organizer unisce sincronizzazione IMAP, organizzazione
+      assistita da intelligenza artificiale e strumenti di gestione quotidiana
+      della posta, pensato per contesti in cui occorre catalogare volumi elevati
+      di email in modo strutturato e ripetibile.
+    features:
+      - Multiutente
+      - Sistema di classificazione delle email con AI
+      - Gestisce infinite caselle di posta
+legal:
+  license: EUPL-1.2
+maintenance:
+  type: community
+  contacts:
+    - name: Rosario Sensale
+      email: sviluppoweb412@gmail.com
+localisation:
+  localisationReady: false
+  availableLanguages:
+    - it
+
