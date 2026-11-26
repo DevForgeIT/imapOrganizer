@@ -15,15 +15,6 @@ const schema = z.object({
     .default("false")
     .transform((v) => v === "true" || v === "1"),
   COOKIE_NAME: z.string().default("io_session"),
-  // Optional bootstrap only — day-to-day auth uses tbl_users in Mongo.
-  SUPER_ADMIN_EMAIL: z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    z.string().email().optional(),
-  ),
-  SUPER_ADMIN_PASSWORD: z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    z.string().min(8).optional(),
-  ),
 });
 
 export type Config = z.infer<typeof schema>;

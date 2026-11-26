@@ -8,19 +8,15 @@ import { seedSuperAdmin } from "./auth/seedSuperAdmin.js";
 async function main() {
   const cfg = getConfig();
   await connectDb();
-  const seed = await seedSuperAdmin();
+  await seedSuperAdmin();
   const app = await buildApp();
   startJobLoop(2000);
   startCron(cfg.CRON_INTERVAL_MS);
   await app.listen({ port: cfg.PORT, host: "0.0.0.0" });
   app.log.info(`API listening on ${cfg.PORT}`);
-  if (seed === "created") {
-    app.log.info(`Bootstrap super admin created: ${cfg.SUPER_ADMIN_EMAIL}`);
-  } else if (seed === "skipped") {
-    app.log.info(
-      "SUPER_ADMIN_* not set — using existing users in Mongo (tbl_users)",
-    );
-  }
+  app.log.info(
+    "Super admin: run `npm run init-db` if tbl_users has no admin yet",
+  );
 }
 
 main().catch((err) => {
