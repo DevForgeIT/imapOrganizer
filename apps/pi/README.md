@@ -54,7 +54,7 @@ PI_AUTH_PATH=../pi/auth.json
 Assoluto **Windows**:
 
 ```env
-PI_AUTH_PATH=D:/xampp/htdocs/IMAPOrganizer/apps/pi/auth.json
+PI_AUTH_PATH=<root>/IMAPOrganizer/apps/pi/auth.json
 ```
 
 Assoluto **Linux**:
