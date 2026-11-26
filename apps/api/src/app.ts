@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
+import formbody from "@fastify/formbody";
 import rateLimit from "@fastify/rate-limit";
 import { getConfig } from "./config.js";
 import { authPlugin } from "./auth/plugin.js";
@@ -19,9 +20,10 @@ export async function buildApp() {
     origin: cfg.WEB_ORIGIN,
     credentials: true,
     methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
   });
   await app.register(cookie);
+  await app.register(formbody);
   await app.register(rateLimit, {
     max: 100,
     timeWindow: "1 minute",

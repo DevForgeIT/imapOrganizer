@@ -1,4 +1,9 @@
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { clearSessionToken, getSessionToken } from "./session";
+
+export const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+
+const API = API_URL;
 
 export class ApiError extends Error {
   status: number;
@@ -18,6 +23,10 @@ export async function api<T>(
     headers.set("Content-Type", "application/json");
     body = JSON.stringify(init.json);
   }
+  const sessionToken = getSessionToken();
+  if (sessionToken && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${sessionToken}`);
+  }
 
   const res = await fetch(`${API}${path}`, {
     ...init,
@@ -27,8 +36,10 @@ export async function api<T>(
   });
 
   if (res.status === 401 && typeof window !== "undefined") {
+    clearSessionToken();
     if (!window.location.pathname.startsWith("/login") &&
-        !window.location.pathname.startsWith("/register")) {
+        !window.location.pathname.startsWith("/register") &&
+        !window.location.pathname.startsWith("/spid/")) {
       window.location.href = "/login";
     }
   }

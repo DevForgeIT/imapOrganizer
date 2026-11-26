@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { clearSessionToken } from "@/lib/session";
 import { useRouter } from "next/navigation";
 import type { UserRole } from "@imap-organizer/shared";
 import { IconUsers } from "@/components/Icons";
@@ -16,8 +17,12 @@ export function AppHeader({
   const router = useRouter();
 
   async function logout() {
-    await api("/auth/logout", { method: "POST" });
-    router.push("/login");
+    try {
+      await api("/auth/logout", { method: "POST" });
+    } finally {
+      clearSessionToken();
+      router.push("/login");
+    }
   }
 
   return (

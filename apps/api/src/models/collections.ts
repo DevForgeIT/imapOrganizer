@@ -22,6 +22,10 @@ export interface UserDoc {
   passwordHash: string;
   role: UserRole;
   active: boolean;
+  /** SPID fiscal number (e.g. TINIT-...), when logged in via SPID */
+  fiscalNumber?: string | null;
+  spidCode?: string | null;
+  authProvider?: "local" | "spid";
   createdAt: Date;
   updatedAt: Date;
 }

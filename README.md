@@ -71,7 +71,52 @@ Modifica `apps/api/.env`:
 | `PI_AUTH_PATH` | Path a `auth.json` Pi (default relativo: `../pi/auth.json`) |
 | `CRON_INTERVAL_MS` | Intervallo cron sync/classify (default `300000`) |
 | `IMAP_WRITE_ENABLED` | `true` = scrittura IMAP (delete, create cartelle, MOVE messaggi) |
+| `SPID_ENABLED` | `true` = abilita login SPID; default `false` |
+| `SPID_BASE_URL` | URL pubblico HTTPS dell’API (in Demo locale: tunnel) |
+| `SPID_IDP_METADATA_PATH` | Path al metadata IdP (default `spid/idp-metadata.xml`) |
+| `SPID_SP_KEY_PATH` / `SPID_SP_CERT_PATH` | Chiave e certificato SP |
+| `SPID_AUTHN_CONTEXT` | Livello SPID (Demo: `https://www.spid.gov.it/SpidL1`) |
 | `COOKIE_NAME` | Nome cookie sessione (default `io_session`) |
+
+### SPID
+
+#### File locali (Demo) → da sostituire in produzione
+
+Cartella `apps/api/spid/`:
+
+| File | Demo (locale) | Produzione / reale |
+|------|---------------|--------------------|
+| `idp-metadata.xml` | Metadata IdP Demo (`https://demo.spid.gov.it/metadata.xml`) | Metadata dell’IdP (o Aggregatore) reale |
+| `sp-key.pem` | Chiave SP di test | Chiave SP conforme AgID |
+| `sp-cert.pem` | Certificato SP di test | Certificato SP conforme AgID |
+
+Generare chiave + certificato Demo (self-signed):
+
+```bash
+npm run spid:certs -w @imap-organizer/api
+```
+
+Scrive `apps/api/spid/sp-key.pem` e `apps/api/spid/sp-cert.pem`.  
+`sp-key.pem` **non** va in git (è in `.gitignore`); `sp-cert.pem` e `idp-metadata.xml` sì.
+
+In `.env` impostare almeno: `SPID_ENABLED=true`, `SPID_BASE_URL=<HTTPS pubblico API>`, e i path ai tre file sopra.
+
+Tunnel HTTPS verso l’API in test (mappa la porta `4000`):
+
+```bash
+cloudflared tunnel --url http://localhost:4000
+```
+
+Copia l’URL `https://….trycloudflare.com` in `SPID_BASE_URL` e in `NEXT_PUBLIC_API_URL`, poi registra `https://….trycloudflare.com/auth/spid/metadata` su [demo.spid.gov.it/validator](https://demo.spid.gov.it/validator) (`validator` / `validator`).
+
+#### Endpoint API
+
+| Metodo | Path | Descrizione |
+|--------|------|-------------|
+| `GET` | `/auth/spid/metadata` | Metadata Service Provider (da registrare sull’IdP/Validator) |
+| `GET` | `/auth/spid/login` | Avvio login SPID (AuthnRequest HTTP-POST) |
+| `POST` | `/auth/spid/acs` | Assertion Consumer Service (ritorno dall’IdP) |
+| `GET`/`POST` | `/auth/spid/slo` | Single Logout |
 
 ### Configurazione Web
 
@@ -146,6 +191,9 @@ IMAP_SECRET=0123456789abcdef0123456789abcdef
 WEB_ORIGIN=http://localhost:3000
 NEXT_PUBLIC_API_URL=http://localhost:4000
 IMAP_WRITE_ENABLED=true
+SPID_ENABLED=false
+SPID_BASE_URL=http://localhost:4000
+SPID_IDP_METADATA_PATH=spid/idp-metadata.xml
 ```
 
 Note:
