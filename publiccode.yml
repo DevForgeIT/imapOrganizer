@@ -92,6 +92,7 @@ description:
     screenshots:
       - https://github.com/DevForgeIT/imapOrganizer/blob/main/screen/login.png
       - https://github.com/DevForgeIT/imapOrganizer/blob/main/screen/sync.png
+      - https://github.com/DevForgeIT/imapOrganizer/blob/main/screen/caselle_posta.png
   it:
     localisedName: IMAP Organizer
     shortDescription: Software multiutente per sincronizzare caselle IMAP e
