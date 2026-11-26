@@ -11,7 +11,7 @@ Pensato per sviluppatori, pubbliche amministrazioni che vogliono clonare, config
 - Sync posta → MongoDB; dopo ogni sync parte automaticamente la classificazione
 - Cartelle utente + cartelle `system` create dal classificatore
 - Vista organizzazione (filtri cartella, drag & drop tra categorie, popup messaggio)
-- Eliminazione reale messaggio (app + server IMAP) se `IMAP_WRITE_ENABLED=true`
+- Con `IMAP_WRITE_ENABLED=true`: elimina, crea cartelle e sposta messaggi anche sul server IMAP (non solo Mongo)
 
 L’interfaccia **non** salva credenziali o posta in `localStorage`: parla solo con l’API.
 
@@ -70,7 +70,7 @@ Modifica `apps/api/.env`:
 | `WEB_ORIGIN` | Origine UI per CORS/cookie (`http://localhost:3000`) |
 | `PI_AUTH_PATH` | Path a `auth.json` Pi (default relativo: `../pi/auth.json`) |
 | `CRON_INTERVAL_MS` | Intervallo cron sync/classify (default `300000`) |
-| `IMAP_WRITE_ENABLED` | `true` = delete messaggi anche su IMAP |
+| `IMAP_WRITE_ENABLED` | `true` = scrittura IMAP (delete, create cartelle, MOVE messaggi) |
 | `COOKIE_NAME` | Nome cookie sessione (default `io_session`) |
 
 ### Configurazione Web
@@ -113,6 +113,117 @@ Lo script genera d’ufficio il primo `super_admin` (credenziali fisse di defaul
 
 Idempotente: rieseguirlo ripristina email/ruolo/password di default dell’admin ufficiale.  
 Dopo il primo accesso conviene cambiare la password dall’interfaccia admin.
+
+## Docker (API + Web)
+
+MongoDB **non** è incluso nel compose: deve essere già installato e raggiungibile (host o remoto).
+
+### Procedura creazione container
+
+**1. Prerequisiti**
+
+- Docker Desktop (Windows/Mac) oppure Docker Engine + Compose (Linux)
+- MongoDB attivo (es. su `localhost:27017`, database `email_organizer`)
+- Repository clonato in locale
+
+**2. Credenziali Pi**
+
+```bash
+cp apps/pi/auth.example apps/pi/auth.json
+# modifica apps/pi/auth.json con i token del provider LLM
+```
+
+Senza questo file il mount del container `api` fallisce.
+
+**3. Variabili d’ambiente (opzionale ma consigliato)**
+
+Crea un file `.env` nella **root** del progetto:
+
+```env
+MONGODB_URI=mongodb://host.docker.internal:27017/email_organizer
+JWT_SECRET=change-me-long-random-secret
+IMAP_SECRET=0123456789abcdef0123456789abcdef
+WEB_ORIGIN=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:4000
+IMAP_WRITE_ENABLED=true
+```
+
+Note:
+- Su **Windows/Mac** (Docker Desktop) `host.docker.internal` punta al Mongo sul PC host.
+- Su **Linux**, se non funziona, metti l’IP del host o la URI Mongo remota in `MONGODB_URI`.
+- `NEXT_PUBLIC_API_URL` viene “baked” in **build** dell’immagine web: se la cambi, rifai il build di `web`.
+
+**4. Build delle immagini**
+
+Dalla root del repository:
+
+```bash
+docker compose build
+```
+
+Equivalente esplicito:
+
+```bash
+docker compose build api
+docker compose build web
+```
+
+Dockerfile usati:
+- `apps/api/Dockerfile` → immagine API
+- `apps/web/Dockerfile` → immagine Web (Next.js standalone)
+
+**5. Avvio dei container**
+
+```bash
+docker compose up -d
+```
+
+Oppure build + avvio in un colpo solo:
+
+```bash
+docker compose up -d --build
+```
+
+Verifica:
+
+```bash
+docker compose ps
+docker compose logs -f api
+docker compose logs -f web
+```
+
+**6. Inizializza il super admin (una tantum)**
+
+```bash
+docker compose run --rm init-db
+```
+
+Login di default:
+- URL: http://localhost:3000/login
+- Email: `admin@imap-organizer.local`
+- Password: `Password1!`
+
+**7. URL servizi**
+
+| Servizio | URL |
+|----------|-----|
+| Web | http://localhost:3000 |
+| API | http://localhost:4000 |
+| Health API | http://localhost:4000/health |
+
+**8. Comandi utili**
+
+```bash
+# Stop
+docker compose down
+
+# Rebuild dopo modifiche al codice
+docker compose up -d --build
+
+# Solo rebuild web (es. dopo cambio NEXT_PUBLIC_API_URL)
+docker compose build web
+docker compose up -d web
+```
 
 ## Avvio in sviluppo
 

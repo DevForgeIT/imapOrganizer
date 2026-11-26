@@ -1,0 +1,57 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: "4000"
+      # Mongo già esistente (host). Su Docker Desktop Windows/Mac: host.docker.internal
+      MONGODB_URI: ${MONGODB_URI:-mongodb://host.docker.internal:27017/email_organizer}
+      JWT_SECRET: ${JWT_SECRET:-change-me-long-random-secret}
+      IMAP_SECRET: ${IMAP_SECRET:-0123456789abcdef0123456789abcdef}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+      PI_AUTH_PATH: /app/apps/pi/auth.json
+      CRON_INTERVAL_MS: ${CRON_INTERVAL_MS:-300000}
+      IMAP_WRITE_ENABLED: ${IMAP_WRITE_ENABLED:-true}
+      COOKIE_NAME: ${COOKIE_NAME:-io_session}
+    volumes:
+      # Mount Pi credentials (create from apps/pi/auth.example)
+      - ./apps/pi/auth.json:/app/apps/pi/auth.json:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+    depends_on:
+      - api
+
+  # One-shot: create default super_admin
+  # Usage: docker compose run --rm init-db
+  init-db:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      MONGODB_URI: ${MONGODB_URI:-mongodb://host.docker.internal:27017/email_organizer}
+      JWT_SECRET: ${JWT_SECRET:-change-me-long-random-secret}
+      IMAP_SECRET: ${IMAP_SECRET:-0123456789abcdef0123456789abcdef}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+    working_dir: /app/apps/api
+    command: ["npx", "tsx", "scripts/init-db.ts"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    profiles:
+      - tools
