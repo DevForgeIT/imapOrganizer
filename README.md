@@ -72,7 +72,6 @@ Modifica `apps/api/.env`:
 | `CRON_INTERVAL_MS` | Intervallo cron sync/classify (default `300000`) |
 | `IMAP_WRITE_ENABLED` | `true` = delete messaggi anche su IMAP |
 | `COOKIE_NAME` | Nome cookie sessione (default `io_session`) |
-| `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` | **Opzionali**: bootstrap admin se `tbl_users` è vuota |
 
 ### Configurazione Web
 
@@ -92,6 +91,28 @@ cp apps/pi/auth.example apps/pi/auth.json
 
 Compila `apps/pi/auth.json` con i token del provider usato da `@earendil-works/pi-coding-agent`.  
 **Non committare** questo file (è in `.gitignore`).
+
+### Inizializza il database (super admin)
+
+Con MongoDB avviato e `apps/api/.env` configurato, dalla **root** del repo:
+
+```bash
+npm run init-db
+```
+
+Lo script genera d’ufficio il primo `super_admin` (credenziali fisse di default):
+
+| Campo | Valore |
+|-------|--------|
+| Email | `admin@imap-organizer.local` |
+| Password | `Password1!` |
+
+1. si connette a MongoDB e crea gli indici  
+2. crea (o aggiorna) l’admin in `tbl_users`  
+3. stampa le credenziali di login  
+
+Idempotente: rieseguirlo ripristina email/ruolo/password di default dell’admin ufficiale.  
+Dopo il primo accesso conviene cambiare la password dall’interfaccia admin.
 
 ## Avvio in sviluppo
 
@@ -116,15 +137,9 @@ npm run dev:web
 
 ### Primo accesso
 
-1. Se Mongo è vuoto e hai impostato `SUPER_ADMIN_*` in `.env`, al boot viene creato l’admin.
-2. Oppure usa uno script di reset password (vedi sotto) su utenti già presenti.
-3. Login: http://localhost:3000/login  
-4. Crea altri utenti da http://localhost:3000/admin/users (solo `super_admin`).
-
-Esempio tipico di bootstrap (se configurato così in `.env`):
-
-- Email: `admin@imap-organizer.local`
-- Password: `Password1!`
+1. Esegui `npm run init-db` (vedi sopra)
+2. Login: http://localhost:3000/login con le credenziali stampate dallo script
+3. Crea altri utenti da http://localhost:3000/admin/users (solo `super_admin`)
 
 La registrazione pubblica (`/register`) è disabilitata.
 
@@ -160,10 +175,17 @@ Per la web usa il comando di start Next del workspace `@imap-organizer/web` (o i
 
 ## Script utili (API)
 
-Dalla cartella `apps/api` (o con path corretti):
+Dalla **root** del repo:
 
 ```bash
-# Reset password di tutti gli utenti (default Password1!)
+# Bootstrap DB + super_admin (prima installazione / reset admin)
+npm run init-db
+```
+
+Dalla cartella `apps/api`:
+
+```bash
+# Reset password di TUTTI gli utenti (default Password1!)
 npx tsx scripts/reset-all-passwords.ts
 
 # Password custom (Windows PowerShell)
