@@ -6,14 +6,14 @@ Pensato per sviluppatori, pubbliche amministrazioni che vogliono clonare, config
 
 ## Cosa fa
 
-- Login multiutente (niente registrazione pubblica: crea gli utenti un `super_admin`)
-- Gestione caselle IMAP (test connessione, sync, classifica)
+- Login multiutente (gli utenti sono creati dal `super_admin`)
+- Gestione caselle IMAP (test connessione, sync, classifica automatica mediante AI)
 - Sync posta → MongoDB; dopo ogni sync parte automaticamente la classificazione
 - Cartelle utente + cartelle `system` create dal classificatore
 - Vista organizzazione (filtri cartella, drag & drop tra categorie, popup messaggio)
-- Con `IMAP_WRITE_ENABLED=true`: elimina, crea cartelle e sposta messaggi anche sul server IMAP (non solo Mongo)
+- Con `IMAP_WRITE_ENABLED=true`: elimina, crea cartelle e sposta messaggi anche sul server IMAP (IMAP sicronizzato con Mongo)
 
-L’interfaccia **non** salva credenziali o posta in `localStorage`: parla solo con l’API.
+L’interfaccia non interagisce direttamente con Mongo, ma l'interazione avviene mediante API.
 
 
 ## Stack
@@ -38,7 +38,7 @@ Browser  →  apps/web (:3000)  →  HTTP  →  apps/api (:4000)
 
 - **Node.js** ≥ 22.19
 - **npm** (workspaces)
-- **MongoDB** raggiungibile (default `127.0.0.1:27017`, DB `email_organizer`)
+- **MongoDB** raggiungibile (default `127.0.0.1:27017`, DB `email_organizer`, configurabile nell'env file)
 - Credenziali provider LLM per Pi (file `apps/pi/auth.json`)
 
 ## Installazione
@@ -111,8 +111,8 @@ Lo script genera d’ufficio il primo `super_admin` (credenziali fisse di defaul
 2. crea (o aggiorna) l’admin in `tbl_users`  
 3. stampa le credenziali di login  
 
-Idempotente: rieseguirlo ripristina email/ruolo/password di default dell’admin ufficiale.  
-Dopo il primo accesso conviene cambiare la password dall’interfaccia admin.
+Se viene riseguito ripristina email/ruolo/password di default dell’admin ufficiale.  
+Dopo il primo accesso conviene *cambiare* la password dall’interfaccia admin.
 
 ## Docker (API + Web)
 
