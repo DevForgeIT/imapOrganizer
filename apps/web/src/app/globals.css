@@ -718,8 +718,22 @@ table.messages th {
 .mailbox-card-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
   padding-top: 0.25rem;
+}
+
+.mailbox-card-actions-main,
+.mailbox-card-actions-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.mailbox-card-actions-meta {
+  margin-left: auto;
 }
 
 .btn-sm {
