@@ -63,10 +63,9 @@ export async function syncMailbox(
     message?: string;
   }) => Promise<void>,
 ): Promise<{ upserted: number }> {
-  // Phase 1: IMAP is read-only. Do not MOVE/COPY/STORE/CREATE/DELETE.
-  if (getConfig().IMAP_WRITE_ENABLED) {
-    // Flag reserved for Phase 2; sync itself remains fetch-only.
-  }
+  // Sync remains fetch-only. CREATE/MOVE/DELETE happen via organize/delete helpers
+  // when IMAP_WRITE_ENABLED=true.
+  void getConfig().IMAP_WRITE_ENABLED;
 
   const box = await mailboxes().findOne({ _id: mailboxId });
   if (!box) throw new Error("Mailbox not found");

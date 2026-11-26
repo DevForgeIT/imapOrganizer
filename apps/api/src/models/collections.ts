@@ -49,6 +49,8 @@ export interface FolderDoc {
   slug: string;
   source: FolderSource;
   description: string;
+  /** IMAP mailbox path once mirrored (Phase 2 write). */
+  imapPath?: string | null;
   active: boolean;
   createdAt: Date;
   updatedAt: Date;

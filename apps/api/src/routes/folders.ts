@@ -2,6 +2,8 @@ import type { FastifyInstance } from "fastify";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { requireAuth } from "../auth/plugin.js";
+import { decryptImapPassword } from "../crypto/imapSecret.js";
+import { ensureImapFolder, isImapWriteEnabled } from "../imap/organize.js";
 import { folders, mailboxes, messages } from "../models/collections.js";
 import { slugify } from "../util/slug.js";
 
@@ -24,6 +26,7 @@ function toDto(doc: {
   slug: string;
   source: "user" | "system";
   description: string;
+  imapPath?: string | null;
   active: boolean;
 }) {
   return {
@@ -33,6 +36,7 @@ function toDto(doc: {
     slug: doc.slug,
     source: doc.source,
     description: doc.description,
+    imapPath: doc.imapPath ?? null,
     active: doc.active,
   };
 }
@@ -93,6 +97,27 @@ export async function folderRoutes(app: FastifyInstance): Promise<void> {
     }
 
     const now = new Date();
+    let imapPath: string | null = null;
+    if (isImapWriteEnabled()) {
+      try {
+        imapPath = await ensureImapFolder({
+          conn: {
+            host: box.host,
+            port: box.port,
+            tls: box.tls,
+            username: box.username,
+            password: decryptImapPassword(box.passwordEnc),
+          },
+          folderName: parsed.data.name,
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return reply.code(502).send({
+          error: `Creazione cartella IMAP fallita: ${message}`,
+        });
+      }
+    }
+
     const result = await folders().insertOne({
       userId: req.userId!,
       mailboxId,
@@ -100,6 +125,7 @@ export async function folderRoutes(app: FastifyInstance): Promise<void> {
       slug,
       source: "user",
       description: parsed.data.description,
+      imapPath,
       active: true,
       createdAt: now,
       updatedAt: now,

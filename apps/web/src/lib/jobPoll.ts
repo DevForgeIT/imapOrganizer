@@ -15,7 +15,8 @@ export async function pollSingleJob(
     message: type === "sync" ? "Avvio sync…" : "Avvio classificazione…",
   });
 
-  for (let i = 0; i < 180; i++) {
+  // Classify can take minutes (Pi + optional IMAP). Allow ~30 min.
+  for (let i = 0; i < 900; i++) {
     const job = await api<JobDto>(`/jobs/${jobId}`);
     onProgress({
       type: job.type,

@@ -1,10 +1,12 @@
 import { ObjectId } from "mongodb";
 import type { JobTriggeredBy, JobType } from "@imap-organizer/shared";
+import { mirrorMessageOrganization } from "../imap/mirrorOrg.js";
 import { syncMailbox } from "../imap/sync.js";
 import {
   classifyMessageWithPi,
 } from "../llm/classify.js";
 import { slugify } from "../util/slug.js";
+import { withTimeout } from "../util/timeout.js";
 import {
   folders,
   jobs,
@@ -14,6 +16,9 @@ import {
 
 let loopTimer: ReturnType<typeof setInterval> | null = null;
 let busy = false;
+
+const CLASSIFY_TIMEOUT_MS = 120_000;
+const IMAP_MIRROR_TIMEOUT_MS = 60_000;
 
 export async function enqueueJob(input: {
   userId: ObjectId;
@@ -148,16 +153,25 @@ export async function classifyMailbox(
 
   for (let i = 0; i < unclassified.length; i++) {
     const msg = unclassified[i]!;
+    await onProgress({
+      current: i,
+      total,
+      message: `Classifying ${i + 1}/${total}: ${msg.subject.slice(0, 60) || "(no subject)"}`,
+    });
     try {
-      const result = await classifyMessageWithPi({
-        folders: folderPayload,
-        message: {
-          subject: msg.subject,
-          from: msg.from,
-          date: msg.date.toISOString(),
-          bodyText: msg.bodyText,
-        },
-      });
+      const result = await withTimeout(
+        classifyMessageWithPi({
+          folders: folderPayload,
+          message: {
+            subject: msg.subject,
+            from: msg.from,
+            date: msg.date.toISOString(),
+            bodyText: msg.bodyText,
+          },
+        }),
+        CLASSIFY_TIMEOUT_MS,
+        `Pi classify msg ${msg._id.toHexString()}`,
+      );
 
       let folderId: ObjectId | null = null;
 
@@ -193,14 +207,44 @@ export async function classifyMailbox(
         });
       }
 
+      const folderDoc =
+        activeFolders.find((f) => f._id.equals(folderId)) ??
+        (await folders().findOne({ _id: folderId }));
+      if (!folderDoc) throw new Error("Folder missing after classify");
+
+      let imapFolder = msg.imapFolder;
+      let imapUid = msg.imapUid;
+      let reason = result.reason || "";
+      try {
+        const mirrored = await withTimeout(
+          mirrorMessageOrganization({
+            message: msg,
+            folder: folderDoc,
+          }),
+          IMAP_MIRROR_TIMEOUT_MS,
+          `IMAP mirror msg ${msg._id.toHexString()}`,
+        );
+        if (mirrored) {
+          imapFolder = mirrored.imapFolder;
+          imapUid = mirrored.imapUid;
+          folderDoc.imapPath = mirrored.imapPath;
+        }
+      } catch (imapErr) {
+        const imapMsg =
+          imapErr instanceof Error ? imapErr.message : String(imapErr);
+        reason = `${reason} (IMAP mirror failed: ${imapMsg})`.trim();
+      }
+
       await messages().updateOne(
         { _id: msg._id },
         {
           $set: {
             folderId,
+            imapFolder,
+            imapUid,
             classification: {
               folderId,
-              reason: result.reason || "",
+              reason,
               at: new Date(),
             },
             updatedAt: new Date(),
@@ -216,11 +260,34 @@ export async function classifyMailbox(
         activeFolders,
         folderPayload,
       );
+      const reviewFolder =
+        activeFolders.find((f) => f._id.equals(reviewId)) ??
+        (await folders().findOne({ _id: reviewId }));
+
+      let imapFolder = msg.imapFolder;
+      let imapUid = msg.imapUid;
+      if (reviewFolder) {
+        try {
+          const mirrored = await mirrorMessageOrganization({
+            message: msg,
+            folder: reviewFolder,
+          });
+          if (mirrored) {
+            imapFolder = mirrored.imapFolder;
+            imapUid = mirrored.imapUid;
+          }
+        } catch {
+          /* keep local assignment even if IMAP mirror of review folder fails */
+        }
+      }
+
       await messages().updateOne(
         { _id: msg._id },
         {
           $set: {
             folderId: reviewId,
+            imapFolder,
+            imapUid,
             classification: {
               folderId: reviewId,
               reason: `classify failed → Da rivedere: ${reason}`,
@@ -315,6 +382,25 @@ export async function processNextJob(): Promise<boolean> {
     busy = false;
   }
   return true;
+}
+
+/** Mark abandoned running jobs as failed so the queue can continue after restart. */
+export async function recoverStuckJobs(maxAgeMs = 15 * 60_000): Promise<number> {
+  const cutoff = new Date(Date.now() - maxAgeMs);
+  const res = await jobs().updateMany(
+    {
+      status: "running",
+      startedAt: { $lt: cutoff },
+    },
+    {
+      $set: {
+        status: "failed",
+        finishedAt: new Date(),
+        error: "Job abandoned (stuck running; recovered on API startup)",
+      },
+    },
+  );
+  return res.modifiedCount;
 }
 
 export function startJobLoop(intervalMs = 2000): void {

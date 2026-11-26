@@ -5,6 +5,7 @@ import { requireAuth } from "../auth/plugin.js";
 import { getConfig } from "../config.js";
 import { decryptImapPassword } from "../crypto/imapSecret.js";
 import { deleteMessageOnImap } from "../imap/deleteMessage.js";
+import { mirrorMessageOrganization } from "../imap/mirrorOrg.js";
 import { folders, mailboxes, messages } from "../models/collections.js";
 
 const patchMessageSchema = z.object({
@@ -154,12 +155,32 @@ export async function messageRoutes(app: FastifyInstance): Promise<void> {
     });
     if (!folder) return reply.code(404).send({ error: "Folder not found" });
 
+    let imapFolder = m.imapFolder;
+    let imapUid = m.imapUid;
+    try {
+      const mirrored = await mirrorMessageOrganization({
+        message: m,
+        folder,
+      });
+      if (mirrored) {
+        imapFolder = mirrored.imapFolder;
+        imapUid = mirrored.imapUid;
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return reply.code(502).send({
+        error: `Spostamento IMAP fallito: ${message}`,
+      });
+    }
+
     const now = new Date();
     await messages().updateOne(
       { _id: m._id },
       {
         $set: {
           folderId: folder._id,
+          imapFolder,
+          imapUid,
           classification: {
             folderId: folder._id,
             reason: `Spostato manualmente in «${folder.name}»`,

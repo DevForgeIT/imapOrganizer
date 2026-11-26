@@ -40,6 +40,9 @@ export async function withImap<T>(
     secure: useSecure,
     auth: { user: opts.username, pass: opts.password },
     logger: false,
+    // Prevent indefinite hangs on Gmail / flaky networks
+    socketTimeout: 60_000,
+    greetingTimeout: 30_000,
     tls: {
       // Gmail and most providers; set rejectUnauthorized false only if needed later
       rejectUnauthorized: true,

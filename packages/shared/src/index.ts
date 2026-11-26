@@ -30,6 +30,7 @@ export interface FolderDto {
   slug: string;
   source: FolderSource;
   description: string;
+  imapPath?: string | null;
   active: boolean;
   messageCount?: number;
 }
