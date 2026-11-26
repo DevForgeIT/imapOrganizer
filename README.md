@@ -1,0 +1,220 @@
+# IMAP Organizer
+
+Applicazione web multiutente per collegare caselle **IMAP**, sincronizzare i messaggi e organizzarli in cartelle con **classificazione assistita da AI** (Pi coding agent).
+
+Pensato per sviluppatori, pubbliche amministrazioni che vogliono clonare, configurare e far girare lo stack in locale.
+
+## Cosa fa
+
+- Login multiutente (niente registrazione pubblica: crea gli utenti un `super_admin`)
+- Gestione caselle IMAP (test connessione, sync, classifica)
+- Sync posta → MongoDB; dopo ogni sync parte automaticamente la classificazione
+- Cartelle utente + cartelle `system` create dal classificatore
+- Vista organizzazione (filtri cartella, drag & drop tra categorie, popup messaggio)
+- Eliminazione reale messaggio (app + server IMAP) se `IMAP_WRITE_ENABLED=true`
+
+L’interfaccia **non** salva credenziali o posta in `localStorage`: parla solo con l’API.
+
+
+## Stack
+
+| Pacchetto | Ruolo |
+|-----------|--------|
+| `apps/web` | Next.js (UI) |
+| `apps/api` | Fastify (auth, IMAP, job, cron, Pi) |
+| `packages/shared` | DTO / tipi TypeScript condivisi |
+| `apps/pi` | Credenziali Pi (`auth.json`, non versionato) |
+
+Database: **MongoDB**, collection con prefisso `tbl_*` (es. `tbl_users`, `tbl_mailboxes`, `tbl_messages`, `tbl_folders`, `tbl_jobs`).
+
+```
+Browser  →  apps/web (:3000)  →  HTTP  →  apps/api (:4000)
+                                           ├→ MongoDB
+                                           ├→ IMAP
+                                           └→ Pi agent (apps/pi/auth.json)
+```
+
+## Requisiti
+
+- **Node.js** ≥ 22.19
+- **npm** (workspaces)
+- **MongoDB** raggiungibile (default `127.0.0.1:27017`, DB `email_organizer`)
+- Credenziali provider LLM per Pi (file `apps/pi/auth.json`)
+
+## Installazione
+
+Dalla root del repository:
+
+```bash
+git clone https://github.com/DevForgeIT/imapOrganizer.git
+cd imapOrganizer
+
+npm install
+npm run build -w @imap-organizer/shared
+```
+
+### Configurazione API
+
+```bash
+cp apps/api/.env.example apps/api/.env
+```
+
+Modifica `apps/api/.env`:
+
+| Variabile | Descrizione |
+|-----------|-------------|
+| `PORT` | Porta API (default `4000`) |
+| `MONGODB_URI` | Connection string Mongo |
+| `JWT_SECRET` | Segreto JWT (≥ 16 caratteri) |
+| `IMAP_SECRET` | Chiave AES per password IMAP (32 byte hex o stringa ≥ 32) |
+| `WEB_ORIGIN` | Origine UI per CORS/cookie (`http://localhost:3000`) |
+| `PI_AUTH_PATH` | Path a `auth.json` Pi (default relativo: `../pi/auth.json`) |
+| `CRON_INTERVAL_MS` | Intervallo cron sync/classify (default `300000`) |
+| `IMAP_WRITE_ENABLED` | `true` = delete messaggi anche su IMAP |
+| `COOKIE_NAME` | Nome cookie sessione (default `io_session`) |
+| `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` | **Opzionali**: bootstrap admin se `tbl_users` è vuota |
+
+### Configurazione Web
+
+```bash
+cp apps/web/.env.example apps/web/.env.local
+```
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+```
+
+### Credenziali Pi (classificazione)
+
+```bash
+cp apps/pi/auth.example apps/pi/auth.json
+```
+
+Compila `apps/pi/auth.json` con i token del provider usato da `@earendil-works/pi-coding-agent`.  
+**Non committare** questo file (è in `.gitignore`).
+
+## Avvio in sviluppo
+
+Due terminali dalla root:
+
+**API**
+
+```bash
+npm run dev:api
+```
+
+- API: http://localhost:4000  
+- Health: http://localhost:4000/health  
+
+**Web**
+
+```bash
+npm run dev:web
+```
+
+- UI: http://localhost:3000  
+
+### Primo accesso
+
+1. Se Mongo è vuoto e hai impostato `SUPER_ADMIN_*` in `.env`, al boot viene creato l’admin.
+2. Oppure usa uno script di reset password (vedi sotto) su utenti già presenti.
+3. Login: http://localhost:3000/login  
+4. Crea altri utenti da http://localhost:3000/admin/users (solo `super_admin`).
+
+Esempio tipico di bootstrap (se configurato così in `.env`):
+
+- Email: `admin@imap-organizer.local`
+- Password: `Password1!`
+
+La registrazione pubblica (`/register`) è disabilitata.
+
+## Build di produzione
+
+```bash
+npm run build
+```
+
+Equivalente a build di `shared` → `api` → `web`.
+
+Avvio API compilata (dopo build):
+
+```bash
+npm run start -w @imap-organizer/api
+```
+
+Per la web usa il comando di start Next del workspace `@imap-organizer/web` (o il tuo reverse proxy / process manager).
+
+## Flusso operativo (smoke)
+
+1. Login come `super_admin` → crea un utente
+2. Login come utente → **Aggiungi casella** IMAP
+3. **Test** connessione
+4. **Sync + Classifica** (sync poi classifica in automatico)
+5. Apri posta → cartelle / messaggi / drag & drop
+6. (Opzionale) elimina messaggio dal popup (richiede `IMAP_WRITE_ENABLED=true`)
+
+### Gmail
+
+- Host: `imap.gmail.com`, porta `993`, TLS attivo
+- Usa una **App Password** (16 caratteri), non la password dell’account Google
+
+## Script utili (API)
+
+Dalla cartella `apps/api` (o con path corretti):
+
+```bash
+# Reset password di tutti gli utenti (default Password1!)
+npx tsx scripts/reset-all-passwords.ts
+
+# Password custom (Windows PowerShell)
+$env:NEW_PASSWORD="MiaPassword1!"
+npx tsx scripts/reset-all-passwords.ts
+
+# Controllo conteggi organizzazione
+npx tsx scripts/check-org.ts
+```
+
+## Test
+
+```bash
+npm run test:api
+```
+
+(Vitest sul package `@imap-organizer/api`.)
+
+## Struttura repository
+
+```
+apps/
+  api/          # Fastify: routes, IMAP, jobs, llm/classify
+  web/          # Next.js App Router
+  pi/           # auth.json (locale) + auth.example
+packages/
+  shared/       # Tipi condivisi
+screen/         # Screenshot (documentazione)
+publiccode.yml  # Metadati software (Developers Italia / cataloghi)
+```
+
+### Convenzioni importanti
+
+- Collection Mongo: prefisso **`tbl_`**
+- UI ↔ API: cookie JWT httpOnly + CORS su `WEB_ORIGIN`
+- Job: coda in Mongo (`tbl_jobs`); loop polling in API
+- **Sync** enqueue anche **classify**; in UI l’overlay mostra entrambe le fasi
+- Classificatore: preferisce cartelle `source=user`, crea cartelle `system` se serve; non lascia messaggi “senza categoria” a regime
+
+## Variabili d’ambiente — riepilogo file
+
+| File | Scopo |
+|------|--------|
+| `apps/api/.env` | Runtime API (segreto, Mongo, IMAP write, Pi path) |
+| `apps/web/.env.local` | `NEXT_PUBLIC_API_URL` |
+| `apps/pi/auth.json` | Auth provider LLM per Pi |
+
+## Licenza / metadati
+
+Vedi `publiccode.yml` per nome, organizzazione, stato di sviluppo e descrizione catalogabile.
+
+## Supporto sviluppatori
+
+Issue e contributi sul repository GitHub del progetto. Per problemi di classificazione verifica prima che `apps/pi/auth.json` sia valido e che l’API logghi errori sui job `classify` in `tbl_jobs`.
