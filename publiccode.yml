@@ -139,6 +139,10 @@ description:
       - Multiutente
       - Sistema di classificazione delle email con AI
       - Gestisce infinite caselle di posta
+    screenshots:
+      - https://github.com/DevForgeIT/imapOrganizer/blob/main/screen/login.png
+      - https://github.com/DevForgeIT/imapOrganizer/blob/main/screen/sync.png
+      - https://github.com/DevForgeIT/imapOrganizer/blob/main/screen/caselle_posta.png
 legal:
   license: EUPL-1.2
 maintenance:
