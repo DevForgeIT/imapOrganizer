@@ -1,7 +1,7 @@
 publiccodeYmlVersion: 0.7.0
 name: IMAP Organizer
 applicationSuite: Organizzatore AI per la tua Posta elettronica
-url: https://github.com/DevForgeIT/imapOrganizer.git
+url: https://github.com/DevForgeIT/imapOrganizer/
 softwareVersion: "1.00"
 releaseDate: 2026-11-25
 platforms:
