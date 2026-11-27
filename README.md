@@ -394,7 +394,10 @@ publiccode.yml  # Metadati software (Developers Italia / cataloghi)
 
 ## Licenza / metadati
 
-Vedi `publiccode.yml` per nome, organizzazione, stato di sviluppo e descrizione catalogabile.
+Software rilasciato sotto **European Union Public Licence v. 1.2 (EUPL-1.2)**.  
+Testo completo: file [`LICENSE`](./LICENSE).
+
+Metadati di catalogo (nome, organizzazione, stato, descrizioni): [`publiccode.yml`](./publiccode.yml).
 
 ## Supporto sviluppatori
 
