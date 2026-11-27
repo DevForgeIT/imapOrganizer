@@ -13,6 +13,8 @@ organisation:
   name: DevForgeIT
 developmentStatus: development
 softwareType: standalone/web
+supports:
+  - id: alias:spid
 intendedAudience:
   countries:
     - IT
@@ -148,4 +150,3 @@ localisation:
   localisationReady: false
   availableLanguages:
     - it
-
