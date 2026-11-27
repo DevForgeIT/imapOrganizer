@@ -101,15 +101,15 @@ description:
       organizzare automaticamente i messaggi in cartelle tramite classificazione
       AI.
     longDescription: >-
-      IMAP Organizer è un’applicazione web multiutente per gestire e organizzare
+      IMAP Organizer è un'applicazione web multiutente per gestire e organizzare
       caselle di posta accessibili via protocollo IMAP. Il sistema collega una o
       più caselle, sincronizza i messaggi in un archivio applicativo e li
       classifica automaticamente in cartelle tematiche, riducendo il lavoro
       manuale di smistamento.
 
 
-      L’architettura separa interfaccia e logica: un client web leggero
-      (Next.js) comunica solo con un’API dedicata (Fastify), che si occupa di
+      L'architettura separa interfaccia e logica: un client web leggero
+      (Next.js) comunica solo con un'API dedicata (Fastify), che si occupa di
       autenticazione, connessione IMAP, persistenza su MongoDB e
       classificazione. Le credenziali delle caselle sono cifrate lato server; il
       browser non conserva dati di posta o password in locale.
@@ -117,11 +117,11 @@ description:
 
       Dopo la sincronizzazione, un job di classificazione analizza oggetto,
       mittente e contenuto dei messaggi e li assegna a cartelle esistenti oppure
-      ne propone di nuove. Le cartelle definite dall’utente hanno priorità
+      ne propone di nuove. Le cartelle definite dall'utente hanno priorità
       rispetto a quelle generate automaticamente. È possibile spostare i
       messaggi tra categorie (anche con drag & drop), consultarli in una vista
       stile client di posta ed eliminarli in modo effettivo sia
-      dall’applicazione sia dal server IMAP, quando la scrittura IMAP è
+      dall'applicazione sia dal server IMAP, quando la scrittura IMAP è
       abilitata.
 
 
